@@ -3,6 +3,7 @@ import numpy as np
 # LDA, tSNE
 from sklearn.manifold import TSNE
 from gensim.models.ldamodel import LdaModel
+from gensim.utils.SaveLoad import save
 # NLTK
 from nltk.tokenize import RegexpTokenizer
 from nltk.stem.snowball import SnowballStemmer
@@ -49,7 +50,7 @@ texts = df['paper_text_tokens'].values
 dictionary = corpora.Dictionary(texts)
 corpus = [dictionary.doc2bow(text) for text in texts]
 ldamodel = models.ldamodel.LdaModel(corpus, id2word=dictionary,
-                                    num_topics=8, passes=5, minimum_probability=0)
+                                    num_topics=127, passes=5, minimum_probability=0)
 
 hm = np.array([[y for (x,y) in ldamodel[corpus[i]]] for i in range(len(corpus))])
 np.savetxt("final_output.txt",hm)
@@ -114,3 +115,7 @@ slider.js_on_change('value', callback)
 
 layout = column(slider, plot_tsne)
 show(layout)
+
+ldamodel.save('ldaModel.model')
+
+
