@@ -16,16 +16,16 @@ users = 0
 items = 0
 
 def readingFile(filename):
-	f = open(filename,"r")
+	f = open(filename,"r").readlines()
 	data = []
 	for row in f:
-		r = row.split(',')
-		e = [int(r[2]),int(r[0].replace('nips','')+1, int(r[3])]
+		r = row.split('\t')
+		e = [int(r[2]),int(r[0].replace('nips',''))+1, int(r[3].replace('\n',''))]
 		data.append(e)
 	return data
 
 
-def getData():
+def getData(filename):
 	f = open(filename,"r")
 	data = []
 	for row in f:
@@ -229,7 +229,7 @@ def predictRating(data, user_data, item_data):
 	#fw = open('result3.csv','w')
 	fw_w = open('result3.csv','w')
 
-	l = len(toBeRated["user"])
+#	l = len(toBeRated["user"])
 	for e in range(users*items):
 		user = (e/items) + 1
 		item = (e%items) + 1
@@ -256,7 +256,7 @@ def predictRating(data, user_data, item_data):
 				user_pred = np.dot(sim,M[:,item-1])/normal
 
 
-		pred_rate[user,item] = (user_pred + item_pred)/2
+		pred_rate[user-1,item-1] = (user_pred + item_pred)/2
 	np.save('predictions.npy',pred_rate)
 	return pred_rate
 
@@ -267,6 +267,8 @@ user_data = getData(sys.argv[2])
 item_data = getData(sys.argv[3])
 users = user_data.shape[0]
 items = item_data.shape[0]
+print users
+print items
 predictRating(recommend_data, user_data, item_data)
 #crossValidation(recommend_data, user_data, item_data)
 # This file computes the complete matrix after collaborative filtering. Execute it as 'python cf.py ratings.txt users.txt papers.txt' where users is the file containing the vector for users(one user per line), papers.txt is the file containing the paper vectors to be predicted(one per line), and ratings.txt is  the file with relevance scores as given in nips_reviewer_data.
