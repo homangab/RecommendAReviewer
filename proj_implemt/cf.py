@@ -24,6 +24,28 @@ def readingFile(filename):
 		data.append(e)
 	return data
 
+def matrix_factorization(R, P, Q, K, steps=50, alpha=0.0002, beta=0.02):
+    Q = Q.T
+    for step in xrange(steps):
+	print step
+        for i in xrange(len(R)):
+            for j in xrange(len(R[i])):
+                if R[i][j] > 0:
+                    eij = R[i][j] - np.dot(P[i,:],Q[:,j])
+                    for k in xrange(K):
+                        P[i][k] = P[i][k] + alpha * (2 * eij * Q[k][j] - beta * P[i][k])
+                        Q[k][j] = Q[k][j] + alpha * (2 * eij * P[i][k] - beta * Q[k][j])
+        eR = np.dot(P,Q)
+        e = 0
+        for i in xrange(len(R)):
+            for j in xrange(len(R[i])):
+                if R[i][j] > 0:
+                    e = e + pow(R[i][j] - np.dot(P[i,:],Q[:,j]), 2)
+                    for k in xrange(K):
+                        e = e + (beta/2) * ( pow(P[i][k],2) + pow(Q[k][j],2) )
+        if e < 0.001:
+            break
+    return P, Q.T
 
 def getData(filename):
 	f = open(filename,"r")
@@ -35,7 +57,6 @@ def getData(filename):
 	data = np.array(data)
 	data = data.astype('float')
 	return data
-
 
 
 def similarity(data,number):
@@ -71,7 +92,6 @@ def crossValidation(data, user_data, item_data):
 	'''sim_user_cosine = np.zeros((users,users))
 	sim_user_jaccard = np.zeros((users,users))
 	sim_user_pearson = np.zeros((users,users))
-
 	f_sim = open("sim_user_hybrid.txt", "r")
 	for row in f_sim:
 		#print row
@@ -80,12 +100,9 @@ def crossValidation(data, user_data, item_data):
 		sim_user_jaccard[int(r[0])][int(r[1])] = float(r[3])
 		sim_user_pearson[int(r[0])][int(r[1])] = float(r[4])
 	f_sim.close()
-
-
 	sim_item_cosine = np.zeros((items,items))
 	sim_item_jaccard = np.zeros((items,items))
 	sim_item_pearson = np.zeros((items,items))
-
 	f_sim_i = open("sim_item_hybrid.txt", "r")
 	for row in f_sim_i:
 		#print row
@@ -118,14 +135,14 @@ def crossValidation(data, user_data, item_data):
 			item = e[1]
 			true_rate.append(e[2])
 
-			user_pred_cosine = 3.0
-			item_pred_cosine = 3.0
+			user_pred_cosine = 1.0
+			item_pred_cosine = 1.0
 
-			user_pred_jaccard = 3.0
-			item_pred_jaccard = 3.0
+			user_pred_jaccard = 1.0
+			item_pred_jaccard = 1.0
 
-			user_pred_pearson = 3.0
-			item_pred_pearson = 3.0
+			user_pred_pearson = 1.0
+			item_pred_pearson = 1.0
 
 			#item-based
 			if np.count_nonzero(M[:,item-1]):
@@ -190,7 +207,7 @@ def crossValidation(data, user_data, item_data):
 
 	print str(rmse_cosine) +	 "\t" + str(rmse_jaccard) + "\t" + str(rmse_pearson)
 
-	f_rmse = open("rmse_hybrid.txt","w")
+	f_rmse = open("rmse_hybrid_alt_opt.txt","w")
 	f_rmse.write(str(rmse_cosine) + "\t" + str(rmse_jaccard) + "\t" + str(rmse_pearson) + "\n")
 
 	rmse = [rmse_cosine, rmse_jaccard, rmse_pearson]
@@ -227,15 +244,14 @@ def predictRating(data, user_data, item_data):
 	pred_rate = np.zeros((users,items))
 
 	#fw = open('result3.csv','w')
-	fw_w = open('result3.csv','w')
+	fw_w = open('result3_alt_opt.csv','w')
 
-#	l = len(toBeRated["user"])
 	for e in range(users*items):
 		user = (e/items) + 1
 		item = (e%items) + 1
 
-		user_pred = 3.0
-		item_pred = 3.0
+		user_pred = 1.0
+		item_pred = 1.0
 
 		#item-based
 		if np.count_nonzero(M[:,item-1]):
@@ -257,7 +273,7 @@ def predictRating(data, user_data, item_data):
 
 
 		pred_rate[user-1,item-1] = (user_pred + item_pred)/2
-	np.save('predictions.npy',pred_rate)
+	np.save('predictions_alt_opt.npy',pred_rate)
 	return pred_rate
 
 
@@ -265,14 +281,17 @@ def predictRating(data, user_data, item_data):
 recommend_data = readingFile(sys.argv[1])
 user_data = getData(sys.argv[2])
 item_data = getData(sys.argv[3])
+U = user_data
+V = item_data
 users = user_data.shape[0]
 items = item_data.shape[0]
-print users
-print items
-predictRating(recommend_data, user_data, item_data)
+epochs = 5
+for i in range(0,epochs):
+    print i	
+    pred = predictRating(recommend_data, user_data, item_data)
+    num_pred = np.array(pred)
+    U = user_data
+    V = item_data
+    user_data,item_data = matrix_factorization(num_pred,U,V,127)
 #crossValidation(recommend_data, user_data, item_data)
 # This file computes the complete matrix after collaborative filtering. Execute it as 'python cf.py ratings.txt users.txt papers.txt' where users is the file containing the vector for users(one user per line), papers.txt is the file containing the paper vectors to be predicted(one per line), and ratings.txt is  the file with relevance scores as given in nips_reviewer_data.
-
-
-
-#Hybrid Collaborative filtering done by giving similar items and similar users similar scores.(Metrics used for similarity: jaccard, cosine, pearson)

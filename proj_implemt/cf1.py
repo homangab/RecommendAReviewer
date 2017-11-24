@@ -118,14 +118,14 @@ def crossValidation(data, user_data, item_data):
 			item = e[1]
 			true_rate.append(e[2])
 
-			user_pred_cosine = 3.0
-			item_pred_cosine = 3.0
+			user_pred_cosine = 1.0
+			item_pred_cosine = 1.0
 
-			user_pred_jaccard = 3.0
-			item_pred_jaccard = 3.0
+			user_pred_jaccard = 1.0
+			item_pred_jaccard = 1.0
 
-			user_pred_pearson = 3.0
-			item_pred_pearson = 3.0
+			user_pred_pearson = 1.0
+			item_pred_pearson = 1.0
 
 			#item-based
 			if np.count_nonzero(M[:,item-1]):
@@ -234,8 +234,8 @@ def predictRating(data, user_data, item_data):
 		user = (e/items) + 1
 		item = (e%items) + 1
 
-		user_pred = 3.0
-		item_pred = 3.0
+		user_pred = 1.0
+		item_pred = 1.0
 
 		#item-based
 		if np.count_nonzero(M[:,item-1]):
